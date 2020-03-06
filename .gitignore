@@ -1,0 +1,20 @@
+#all files will be ignored
+#train_images/
+#test_images/
+Old/
+plots/
+model/
+.idea/
+__pycache__/
+record_images/
+record_labels/
+test_images/
+test_labels/
+test_lines/
+train_images/
+train_labels/
+train_lines/
+mytest.py
+*.pem
+signal.txt
+main_sub.py
