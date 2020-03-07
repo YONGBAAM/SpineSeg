@@ -31,6 +31,8 @@ trainer = Trainer(model=model,
                   optimizer=torch.optim.Adam(model.parameters(), lr=config['learning_rates']),
                   loader_train = lineloader_train, loader_val = lineloader_val, criterion = nn.MSELoss(), **config)
 
+# trainer.load_model('Line_ep800_tL2.69e-07_vL2.28e-07.tar')
+
 trainer.train()
 trainer.test(test_loader=lineloader_val)
 

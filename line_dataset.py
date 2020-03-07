@@ -24,25 +24,29 @@ from segtransforms import SegResize
 ###############################################
 
 class LineDataset(Dataset):
-    def __init__(self, segmaps, lines, transform_list = None):
+    def __init__(self, segmap_location, line_location, segmap_names, line_names, transform_list = None):
         super(LineDataset).__init__()
-        self.segmaps = segmaps
-        self.lines = lines
-        self.size = len(segmaps)
+        self.segmap_location = segmap_location
+        self.line_location = line_location
+        self.segmap_names = segmap_names
+        self.line_names = line_names
+
+        self.size = len(segmap_names)
         self.transform_list = transform_list
+
         self.toTensor = transforms.ToTensor()
         self.nor = transforms.Normalize((0.5,), (0.5,))
         self.toImage = transforms.ToPILImage()
 
-        if len(segmaps) != len(lines):
-            assert ('segmaps and lines len do not match {},{}'.format(len(segmaps), len(lines)))
+        if len(segmap_names) != len(line_names):
+            assert ('segmaps and lines len do not match {},{}'.format(len(segmap_names), len(line_names)))
 
     def __len__(self):
         return self.size
 
     def __getitem__(self, idx):
-        segmap = self.segmaps[idx]
-        line = self.lines[idx]
+        segmap = np.load(osj(self.segmap_location, self.segmap_names[idx]))
+        line = np.load(osj(self.line_location, self.line_names[idx]))
 
         segmap = self.toImage(np.uint8(segmap*255))
         line = self.toImage(np.uint8(line*255))
@@ -59,20 +63,18 @@ def get_lineloader_train_val(batch_size_tr, batch_size_val = 1, shuffle = True):
     segmap_path = './train_labels'
     line_path = './train_lines'
 
-    segmap_names = [n for n in os.listdir(segmap_path) if n[-4:] == '.npy']
+    segmap_names = read_data_names(segmap_path, 'segmap_names')
+    line_names = read_data_names(line_path, 'line_names')
 
-    segmaps = [np.load(osj(segmap_path, n)) for n in segmap_names]
-    lines = [np.load(osj(line_path, n)) for n in segmap_names]
-
-    N_all = len(segmaps)
+    N_all = len(segmap_names)
     N_val = int(N_all * val_ratio)
     N_train = N_all - N_val
     # get train and validation data set
 
-    segmaps_train = []
-    segmaps_val = []
-    lines_train = []
-    lines_val = []
+    segmap_names_train = []
+    segmap_names_val = []
+    line_names_train = []
+    line_names_val = []
 
     transform_list = [SegResize((512,256))]
 
@@ -84,20 +86,20 @@ def get_lineloader_train_val(batch_size_tr, batch_size_val = 1, shuffle = True):
         permutation = np.load(os.path.join('./', 'val_permutation.npy'))
 
     for ind in permutation[:N_train]:
-        segmaps_train.append(segmaps[ind])
-        lines_train.append(lines[ind])
-    segmaps_train = np.asarray(segmaps_train)
-    lines_train = np.asarray(lines_train)
+        segmap_names_train.append(segmap_names[ind])
+        line_names_train.append(line_names[ind])
 
     for ind in permutation[N_train:]:
-        segmaps_val.append(segmaps[ind])
-        lines_val.append(lines[ind])
-    segmaps_val = np.asarray(segmaps_val)
-    lines_val = np.asarray(lines_val)
+        segmap_names_val.append(segmap_names[ind])
+        line_names_val.append(line_names[ind])
 
     #########################
-    dset_train = LineDataset(segmaps_train, lines_train, transform_list=transform_list)
-    dset_val = LineDataset(segmaps_val, lines_val, transform_list= transform_list)
+    dset_train = LineDataset(segmap_location = segmap_path, line_location = line_path,
+                             segmap_names = segmap_names_train, line_names = line_names_train,
+                             transform_list = transform_list)
+    dset_val = LineDataset(segmap_location = segmap_path, line_location = line_path,
+                             segmap_names = segmap_names_val, line_names = line_names_val,
+                             transform_list = transform_list)
 
     loader_train = DataLoader(dataset=dset_train, batch_size=batch_size_tr, shuffle=shuffle)
     loader_val = DataLoader(dataset=dset_val, batch_size=batch_size_val, shuffle=False)

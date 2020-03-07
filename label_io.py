@@ -75,9 +75,11 @@ def plot_image(image, coord_red = None, coord_gr = None, coord_bl = None,
         plt.plot(line[:, 0], line[:, 1], color ='blue', alpha = 0.5)
 
     if segmap is None:
+
         plt.imshow(image)
 
     else:
+
         segmap = segmap.reshape(H, W)
         segmap = hwc(segmap)
         segmap[:, :, (1, 2)] = 0
@@ -181,14 +183,14 @@ def read_images(data_location, data_names):
         image_list.append(im)
     return image_list
 
-def read_data_names(label_location):
-    path = os.path.join(label_location, 'data_names.csv')
+def read_data_names(label_location, title = 'data_names'):
+    path = os.path.join(label_location, title + '.csv')
     df = pd.read_csv(path, index_col=False, header=None)
     data_names = [df.iloc[i][0] for i in range(len(df))]
     return data_names
 
-def write_data_names(data_names, label_location):
-    path = os.path.join(label_location, 'data_names.csv')
+def write_data_names(data_names, label_location, title = 'data_names'):
+    path = os.path.join(label_location, title + '.csv')
     pd.DataFrame(data_names).to_csv(path, header=False, index=False)
 
 def read_labels(label_location, title = None):
@@ -216,10 +218,12 @@ def write_labels(labels, label_location, relative = False, title = None):
     pd.DataFrame(labels).to_csv(path, header=False, index=False)
 
 def hwc(nparr):
+    nparr = np.squeeze(nparr)
     H,W = nparr.shape
     img = nparr.reshape((H,W,1)).repeat(3, axis = 2)
     return img
 def chw(nparr):
+    nparr = np.squeeze(nparr)
     H,W = nparr.shape
     img = nparr.reshape((1,H,W)).repeat(3, axis = 0)
     return img

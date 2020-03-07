@@ -6,6 +6,7 @@ from label_io import plot_image
 import torch
 import torch.nn as nn
 import datetime
+from os.path import join as osj
 from label_io import write_labels
 
 #Helpers
@@ -254,7 +255,7 @@ class Trainer():
 
         if not os.path.exists(result_save_path):
             os.makedirs(result_save_path)
-        print('Save Relative labels in {}'.format(result_save_path))
+        print('Save Relative labels [size:512*256] in {}'.format(result_save_path))
 
         test_crit = nn.MSELoss()
 
@@ -293,8 +294,8 @@ class Trainer():
                 plt.close()
 
         #save absolute label result
-        test_labels = test_labels.reshape(-1,512*256)
-        write_labels(test_labels, result_save_path, title = 'labels_pred_rel')
+        for ind, tl in enumerate(test_labels):
+            np.save(osj(result_save_path,'{}.npy'.format(ind)), tl)
 
         print('test MSE loss %.2e'%(np.average(test_losses)))
         return test_losses
@@ -360,53 +361,6 @@ class Trainer():
                 return False
         else:return False
 
-
-'''     
-class MetricTracker(object):
-    """
-    Keeps track of most recent, average, sum, and count of a metric.
-    """
-    def __init__(self):
-        self.items = []
-
-    def get_items(self, batch_per_ep = None):
-        size = len(self.items)
-        x = np.arange(1,size+1)
-
-        if batch_per_ep is not None:
-            x /= batch_per_ep
-
-        xy = [np.asarray(list(x)), np.asarray(self.items)]
-        return np.asarray(xy)
-
-    def get_smoothed_list(self, window = 5, batch_per_ep = None):
-        size = len(self.items)
-        if window >size:
-            return None
-        else:
-            item_s = np.zeros(size)
-            for i in range(window -1, item_s.shape[0]):
-                item_s[i] = np.sum(self.item[i-(window -1):i])
-            x = np.arange(1, size + 1)
-
-            if batch_per_ep is not None:
-                x /= batch_per_ep
-
-            xy = [np.asarray(list(x)), np.asarray(item_s)]
-        return xy
-
-    def update(self, value_list):
-        if not type(value_list) == type([]):
-            value_list = [value_list]
-        else:
-            self.items.extend(value_list)
-        return self
-
-    def avg(self):
-        return np.average(self.items)
-
-
-'''
 if __name__ == '__main__':
     import pandas as pd
     df = pd.read_csv('./101_swallow_0.5_all_ep1150.csv')
