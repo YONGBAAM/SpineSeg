@@ -7,7 +7,12 @@ import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 from label_io import read_labels, read_data_names, plot_image, hwc, chw, read_segmaps
+from segtransforms import SegResize
+from os.path import join as osj
+
 # from label_transform import CoordCustomPad, CoordHorizontalFlip,CoordRandomRotate, CoordLabelNormalize, CoordResize, CoordVerticalFlip
+
+val_ratio = 0.1
 
 from segtransforms import SegResize
 ###############################################
@@ -27,6 +32,8 @@ class SegDataset(Dataset):
         self.toTensor = transforms.ToTensor()
         self.nor = transforms.Normalize((0.5,), (0.5,))
         self.toImage = transforms.ToPILImage()
+
+
 
     def __len__(self):
         return self.size
@@ -53,17 +60,16 @@ class SegDataset(Dataset):
         label = self.toTensor(label)
         #맞네?
         return {'image' : image, 'label' : label}
+
 def get_loader_train_val(batch_size_tr=64, batch_size_val=1, shuffle = True):
     data_path = './train_images'
     label_path = './train_labels'
 
     val_ratio = 0.1
-
-    transforms = [SegResize((512,256))]
+    transform_list = [SegResize((512, 256))]
 
     data_names = read_data_names(label_path)
     labels = read_segmaps(label_path, data_names)
-
 
     N_all = len(data_names)
     N_val = int(N_all * val_ratio)
@@ -91,11 +97,10 @@ def get_loader_train_val(batch_size_tr=64, batch_size_val=1, shuffle = True):
         labels_val.append(labels[ind])
     labels_val = np.asarray(labels_val)
     #########################
-    dset_train = SegDataset(data_path, labels_train, data_names_train, transform_list=transforms)
-    dset_val = SegDataset(data_path, labels_val, data_names_val, transform_list=transforms)
+    dset_train = SegDataset(data_path, labels_train, data_names_train, transform_list=transform_list)
+    dset_val = SegDataset(data_path, labels_val, data_names_val, transform_list=transform_list)
 
     loader_train = DataLoader(dataset=dset_train, batch_size=batch_size_tr, shuffle=shuffle)
     loader_val = DataLoader(dataset=dset_val, batch_size=batch_size_val, shuffle=False)
-    return loader_train ,loader_val
-
+    return loader_train, loader_val
 # if __name__ == '__main__':
